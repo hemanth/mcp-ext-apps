@@ -26,7 +26,13 @@
 
             <app-container id="appContainer"></app-container>
 
-            <log-panel id="logPanel"></log-panel>
+            <div class="vertical-resizer" id="verticalResizer"></div>
+
+            <resizable-panels id="bottomPanels">
+                <log-panel id="logPanel"></log-panel>
+                <debug-panel id="debugPanel"></debug-panel>
+                <resources-panel id="resourcesPanel"></resources-panel>
+            </resizable-panels>
         </div>
     </div>
 

@@ -28,15 +28,16 @@ export class LogPanel extends HTMLElement {
             <style>
                 :host {
                     display: block;
+                    height: 100%;
                 }
                 .log-container {
-                    height: 150px;
+                    height: 100%;
                     overflow-y: auto;
                     background: #1a1a1a;
-                    border-radius: 8px;
                     padding: 10px;
                     font-family: monospace;
-                    font-size: 12px;
+                    font-size: 11px;
+                    border-radius: 0 0 8px 8px;
                 }
                 .log-entry {
                     padding: 4px 0;

@@ -15,15 +15,16 @@ body {
 
 header {
     background: #fff;
-    padding: 16px 24px;
+    padding: 12px 24px;
     border-bottom: 1px solid #e0e0e0;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 
 h1 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
 }
 
@@ -34,11 +35,12 @@ h1 {
 }
 
 .sidebar {
-    width: 280px;
+    width: 250px;
     background: #fff;
     border-right: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
 }
 
 tools-sidebar {
@@ -53,23 +55,26 @@ tools-sidebar {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 20px;
-    gap: 20px;
+    padding: 15px;
+    gap: 0;
+    min-height: 0;
 }
 
 .toolbar {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
+    flex-shrink: 0;
+    margin-bottom: 15px;
 }
 
 button {
     background: #000;
     color: #fff;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     transition: background 0.2s;
 }
@@ -89,9 +94,52 @@ button.secondary {
 
 app-container {
     flex: 1;
-    min-height: 0;
+    min-height: 100px;
+    max-height: 100%;
+    overflow: hidden;
 }
 
-log-panel {
+.vertical-resizer {
+    height: 8px;
+    cursor: row-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+    background: transparent;
+    position: relative;
+}
+
+.vertical-resizer::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+    transition: background 0.15s, width 0.15s;
+}
+
+.vertical-resizer:hover::before {
+    background: #999;
+    width: 60px;
+}
+
+.vertical-resizer.dragging::before {
+    background: #666;
+    width: 80px;
+}
+
+resizable-panels {
+    height: 220px;
+    min-height: 50px;
+    flex-shrink: 0;
+    contain: layout style;
+}
+
+resizable-panels.resizing {
+    contain: strict;
 }

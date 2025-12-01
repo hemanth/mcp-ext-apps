@@ -81,6 +81,7 @@ export class AppContainer extends HTMLElement {
                     display: block;
                     flex: 1;
                     min-height: 0;
+                    contain: layout style;
                 }
                 .container {
                     height: 100%;
@@ -88,6 +89,7 @@ export class AppContainer extends HTMLElement {
                     border: 1px solid #e0e0e0;
                     border-radius: 8px;
                     overflow: hidden;
+                    position: relative;
                 }
                 .placeholder {
                     display: flex;
@@ -106,6 +108,9 @@ export class AppContainer extends HTMLElement {
                     font-size: 14px;
                 }
                 .app-frame {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
                     width: 100%;
                     height: 100%;
                     border: none;

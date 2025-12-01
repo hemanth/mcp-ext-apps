@@ -1,6 +1,11 @@
 const MCP_SERVER = 'http://localhost:3001/mcp';
 
 let sessionId = null;
+let debugCallback = null;
+
+export function setDebugCallback(callback) {
+    debugCallback = callback;
+}
 
 export async function sendRequest(method, params = {}) {
     const headers = {
@@ -12,15 +17,21 @@ export async function sendRequest(method, params = {}) {
         headers['mcp-session-id'] = sessionId;
     }
 
+    const requestBody = {
+        jsonrpc: '2.0',
+        id: Date.now(),
+        method,
+        params,
+    };
+
+    if (debugCallback) {
+        debugCallback('request', method, params);
+    }
+
     const response = await fetch(MCP_SERVER, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: Date.now(),
-            method,
-            params,
-        }),
+        body: JSON.stringify(requestBody),
     });
 
     const text = await response.text();
@@ -33,6 +44,11 @@ export async function sendRequest(method, params = {}) {
             if (newSessionId) {
                 sessionId = newSessionId;
             }
+
+            if (debugCallback) {
+                debugCallback('response', method, data);
+            }
+
             return data;
         }
     }
@@ -62,10 +78,19 @@ export async function callTool(name, args) {
 
 export async function disconnect() {
     if (sessionId) {
+        if (debugCallback) {
+            debugCallback('request', 'disconnect', { sessionId });
+        }
+
         await fetch(MCP_SERVER, {
             method: 'DELETE',
             headers: { 'mcp-session-id': sessionId },
         });
+
+        if (debugCallback) {
+            debugCallback('response', 'disconnect', { success: true });
+        }
+
         sessionId = null;
     }
 }
