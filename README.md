@@ -1,6 +1,11 @@
 # MCP Ext Apps
 > An MCP server that serves interactive HTML/JavaScript UIs through tool responses, built with Web Components.
 
+
+https://github.com/user-attachments/assets/dd4c968f-1b82-4975-8b89-374933363a99
+
+
+
 ```
                         MCP Protocol (StreamableHTTP)
 
