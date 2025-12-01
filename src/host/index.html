@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Host</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>MCP Host</h1>
+        <status-bar id="statusBar"></status-bar>
+    </header>
+
+    <div class="container">
+        <div class="sidebar">
+            <tools-sidebar id="toolsSidebar"></tools-sidebar>
+        </div>
+
+        <div class="main-content">
+            <div class="toolbar">
+                <button id="connectBtn">Connect to Server</button>
+                <button id="disconnectBtn" disabled class="secondary">Disconnect</button>
+            </div>
+
+            <app-container id="appContainer"></app-container>
+
+            <log-panel id="logPanel"></log-panel>
+        </div>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+</body>
+</html>
