@@ -100,7 +100,8 @@ async function executeTool(toolName, args) {
             if (item.type === 'resource') {
                 const resourcesPanel = getResourcesPanel();
                 resourcesPanel?.addResource(item.resource);
-                if (item.resource?.mimeType === 'text/html') {
+                // SEP-1865: check for text/html+mcp or text/html
+                if (item.resource?.mimeType === 'text/html+mcp' || item.resource?.mimeType === 'text/html') {
                     appContainer.renderHtml(item.resource.text);
                     return { html: true };
                 }

@@ -154,6 +154,7 @@ export function generateToolFormHtml(tool) {
             <scr` + `ipt>
                 const toolName = '${tool.name}';
                 const properties = ${JSON.stringify(properties)};
+                let messageId = 0;
 
                 document.getElementById('toolForm').addEventListener('submit', function(e) {
                     e.preventDefault();
@@ -171,10 +172,12 @@ export function generateToolFormHtml(tool) {
                         }
                     }
 
+                    // SEP-1865: Use JSON-RPC 2.0 format
                     window.parent.postMessage({
-                        type: 'callTool',
-                        toolName: toolName,
-                        arguments: args
+                        jsonrpc: '2.0',
+                        id: ++messageId,
+                        method: 'tools/call',
+                        params: { name: toolName, arguments: args }
                     }, '*');
 
                     document.getElementById('loading').style.display = 'block';
@@ -182,17 +185,20 @@ export function generateToolFormHtml(tool) {
                 });
 
                 window.addEventListener('message', function(e) {
-                    if (e.data.type === 'toolResult') {
+                    // SEP-1865: Handle JSON-RPC 2.0 responses
+                    if (e.data.jsonrpc === '2.0' && e.data.id) {
                         document.getElementById('loading').style.display = 'none';
                         const resultEl = document.getElementById('result');
                         resultEl.style.display = 'block';
 
                         if (e.data.error) {
                             resultEl.className = 'result error';
-                            resultEl.textContent = 'Error: ' + e.data.error;
-                        } else {
+                            resultEl.textContent = 'Error: ' + e.data.error.message;
+                        } else if (e.data.result) {
                             resultEl.className = 'result success';
-                            resultEl.textContent = e.data.result;
+                            const content = e.data.result.content || [];
+                            const text = content.map(c => c.text || '').join('\\n');
+                            resultEl.textContent = text || JSON.stringify(e.data.result, null, 2);
                         }
                     }
                 });
