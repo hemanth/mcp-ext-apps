@@ -51,12 +51,14 @@ export class ResourcesPanel extends HTMLElement {
     }
 
     getPreview(resource) {
-        if (resource.mimeType === 'text/html') {
-            return `<span class="html-badge">HTML Document</span> (${(resource.text?.length || 0)} chars)`;
+        // SEP-1865: check for text/html+mcp or text/html
+        if (resource.mimeType === 'text/html+mcp' || resource.mimeType === 'text/html') {
+            return `<span class="html-badge">HTML+MCP</span> (${(resource.text?.length || 0)} chars)`;
         }
         if (resource.mimeType?.startsWith('text/')) {
             const text = resource.text || '';
-            return `<pre>${text.substring(0, 100)}${text.length > 100 ? '...' : ''}</pre>`;
+            const escaped = text.substring(0, 100).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<pre>${escaped}${text.length > 100 ? '...' : ''}</pre>`;
         }
         return `<span class="binary-badge">Binary</span>`;
     }
