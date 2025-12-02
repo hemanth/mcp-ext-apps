@@ -1,6 +1,5 @@
 # MCP Ext Apps
-
-Implementation of [MCP Apps Extension (SEP-1865)](https://github.com/anthropics/mcp-sep) - interactive HTML/JS UIs through MCP tools.
+> Sample implementation of MCP Apps Extension (SEP-1865) - interactive HTML/JS UIs through MCP tools.
 
 https://github.com/user-attachments/assets/dd4c968f-1b82-4975-8b89-374933363a99
 
