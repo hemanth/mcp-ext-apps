@@ -18,6 +18,11 @@ app.use(
 // Load UI HTML from dist folder (built by Vite)
 const uiHtml = readFileSync("./dist/src/ui/index.html", "utf-8");
 
+// UI Resource URIs (per SEP-1865 spec)
+const UI_RESOURCES = {
+  dashboard: "ui://mcp-ui-server/dashboard",
+};
+
 // Store active sessions
 const sessions = new Map<
   string,
@@ -34,11 +39,27 @@ function createMcpServer(): McpServer {
     {
       capabilities: {
         logging: {},
+        resources: {},
       },
     }
   );
 
-  // Register a tool that returns UI
+  // Register UI resource (per SEP-1865 spec)
+  server.resource(
+    UI_RESOURCES.dashboard,
+    "Interactive dashboard UI",
+    async () => ({
+      contents: [
+        {
+          uri: UI_RESOURCES.dashboard,
+          mimeType: "text/html+mcp",
+          text: uiHtml,
+        },
+      ],
+    })
+  );
+
+  // Register a tool that references the UI resource (per SEP-1865 spec)
   server.tool(
     "show-dashboard",
     "Display an interactive dashboard UI",
@@ -53,12 +74,15 @@ function createMcpServer(): McpServer {
           {
             type: "resource",
             resource: {
-              uri: "app://mcp-ui-server/dashboard",
-              mimeType: "text/html",
+              uri: UI_RESOURCES.dashboard,
+              mimeType: "text/html+mcp",
               text: uiHtml,
             },
           },
         ],
+        _meta: {
+          "ui/resourceUri": UI_RESOURCES.dashboard,
+        },
       };
     }
   );

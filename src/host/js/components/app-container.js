@@ -1,8 +1,11 @@
+// SEP-1865 compliant app container
 export class AppContainer extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
         this._iframe = null;
+        this._messageId = 0;
+        this._pendingRequests = new Map();
     }
 
     connectedCallback() {
@@ -22,41 +25,144 @@ export class AppContainer extends HTMLElement {
 
             const data = event.data;
 
-            if (data.type === 'callTool') {
-                this.dispatchEvent(new CustomEvent('tool-call', {
-                    detail: {
-                        toolName: data.toolName,
-                        arguments: data.arguments,
-                        callback: (result) => {
-                            if (!result.html && this._iframe) {
-                                this._iframe.contentWindow.postMessage({
-                                    type: 'toolResult',
-                                    result: result.result,
-                                    error: result.error
-                                }, '*');
-                            }
-                        }
-                    },
-                    bubbles: true
-                }));
+            // Validate JSON-RPC 2.0 format
+            if (data.jsonrpc !== '2.0') {
+                return;
+            }
+
+            // Handle requests from guest UI
+            if (data.method) {
+                await this.handleGuestRequest(data);
+            }
+
+            // Handle responses (for pending requests)
+            if (data.id && this._pendingRequests.has(data.id)) {
+                const { resolve } = this._pendingRequests.get(data.id);
+                this._pendingRequests.delete(data.id);
+                resolve(data.result || data.error);
             }
         };
 
         window.addEventListener('message', this._messageHandler);
     }
 
-    renderHtml(html) {
+    async handleGuestRequest(request) {
+        const { id, method, params } = request;
+
+        switch (method) {
+            case 'ui/initialize':
+                // Respond to initialization handshake (SEP-1865)
+                this.sendResponse(id, {
+                    protocolVersion: '2025-06-18',
+                    hostCapabilities: {
+                        tools: { call: true },
+                    },
+                    hostInfo: {
+                        name: 'mcp-ext-apps-host',
+                        version: '1.0.0',
+                    },
+                    hostContext: {
+                        theme: 'light',
+                        displayMode: 'inline',
+                        viewport: {
+                            width: this._iframe?.offsetWidth || 800,
+                            height: this._iframe?.offsetHeight || 600,
+                        },
+                    },
+                });
+                break;
+
+            case 'tools/call':
+                // Forward tool call to host
+                this.dispatchEvent(new CustomEvent('tool-call', {
+                    detail: {
+                        toolName: params.name,
+                        arguments: params.arguments,
+                        callback: (result) => {
+                            if (!result.html) {
+                                this.sendResponse(id, {
+                                    content: result.error
+                                        ? [{ type: 'text', text: result.error }]
+                                        : [{ type: 'text', text: result.result }],
+                                    isError: !!result.error,
+                                });
+                            }
+                        }
+                    },
+                    bubbles: true
+                }));
+                break;
+
+            default:
+                // Unknown method
+                this.sendError(id, -32601, `Method not found: ${method}`);
+        }
+    }
+
+    sendResponse(id, result) {
+        if (!this._iframe) return;
+        this._iframe.contentWindow.postMessage({
+            jsonrpc: '2.0',
+            id,
+            result,
+        }, '*');
+    }
+
+    sendError(id, code, message) {
+        if (!this._iframe) return;
+        this._iframe.contentWindow.postMessage({
+            jsonrpc: '2.0',
+            id,
+            error: { code, message },
+        }, '*');
+    }
+
+    sendNotification(method, params) {
+        if (!this._iframe) return;
+        this._iframe.contentWindow.postMessage({
+            jsonrpc: '2.0',
+            method,
+            params,
+        }, '*');
+    }
+
+    renderHtml(html, toolInput = null) {
         const iframe = document.createElement('iframe');
         iframe.className = 'app-frame';
-        iframe.sandbox = 'allow-scripts allow-forms';
-        iframe.srcdoc = html;
+        // SEP-1865: sandbox with allow-scripts and allow-same-origin
+        iframe.sandbox = 'allow-scripts allow-same-origin';
+
+        // Apply CSP via srcdoc wrapper (SEP-1865 default CSP)
+        const csp = "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-src 'none'; object-src 'none'; base-uri 'self';";
+
+        // Wrap HTML with CSP meta tag
+        const wrappedHtml = html.includes('<head>')
+            ? html.replace('<head>', `<head><meta http-equiv="Content-Security-Policy" content="${csp}">`)
+            : `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="${csp}"></head><body>${html}</body></html>`;
+
+        iframe.srcdoc = wrappedHtml;
 
         const container = this.shadowRoot.querySelector('.container');
         container.innerHTML = '';
         container.appendChild(iframe);
         this._iframe = iframe;
 
+        // Send tool input notification after iframe loads (SEP-1865)
+        if (toolInput) {
+            iframe.onload = () => {
+                this.sendNotification('ui/notifications/tool-input', {
+                    toolName: toolInput.toolName,
+                    arguments: toolInput.arguments,
+                });
+            };
+        }
+
         this.dispatchEvent(new CustomEvent('app-rendered', { bubbles: true }));
+    }
+
+    // Send tool result notification (SEP-1865)
+    sendToolResult(result) {
+        this.sendNotification('ui/notifications/tool-result', result);
     }
 
     showPlaceholder() {
