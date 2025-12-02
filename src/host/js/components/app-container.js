@@ -129,8 +129,11 @@ export class AppContainer extends HTMLElement {
     renderHtml(html, toolInput = null) {
         const iframe = document.createElement('iframe');
         iframe.className = 'app-frame';
-        // SEP-1865: sandbox with allow-scripts and allow-same-origin
-        iframe.sandbox = 'allow-scripts allow-same-origin';
+        // SEP-1865: sandbox with required permissions
+        // allow-scripts: for JS execution
+        // allow-same-origin: for postMessage to work correctly
+        // allow-forms: for form submission (e.g., tool parameter forms)
+        iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
 
         // Apply CSP via srcdoc wrapper (SEP-1865 default CSP)
         const csp = "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; frame-src 'none'; object-src 'none'; base-uri 'self';";
